@@ -8,9 +8,9 @@ Given the size of the datasets, they are not included here, but are referenced f
 
 ### Nodes
 
-* **Judges** 
-* **Cases**
-* **Acts**
+* **Judges** (index on judge ID)
+* **Cases** (index on case ID)
+* **Acts** (index on act ID)
 
 ### Relationships
 
@@ -23,4 +23,6 @@ The notebook provides various routines to load the data into Neo4J. The notebook
 
 ## Next steps
 
-Utilize the Neo4J graph data science routines to start generating insights on centrality, diversity, and the like.
+1. PageRank (+ eyeballs on Bloom) show pretty quickly that the "Code of Criminal Procedure" is replicated several times. The full list is now included in the notebook, in the Acts section. These should clearly be merged. Instead of doing so as a heavy list throughout the original CSVs, leverage the graph and combine the nodes once all is loaded.
+
+2. The next acts down in PageRank, so far, relate to bail and other procedural matters, or prohibition. There are some interesting quirks (e.g., bail is PageRank central, but has low "total count")
