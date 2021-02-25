@@ -8,14 +8,14 @@ Given the size of the datasets, they are not included here, but are referenced f
 
 ### Nodes
 
-* **Judges** (index on judge ID)
-* **Cases** (index on case ID)
-* **Acts** (index on act ID)
+* **Judges** (index on judge ID), current count ~100k
+* **Cases** (index on case ID), current count ~100k (2018 loaded so far only)
+* **Acts** (index on act ID), current count ~30k
 
 ### Relationships
 
-* *JUDGED*: (Judge) -> (Case)
-* *USES_ACT*: (Case) -> Act
+* *JUDGED*: (Judge) -> (Case), current count ~3 million
+* *USES_ACT*: (Case) -> Act, current count ~18 million
 
 ## Notebook
 
@@ -26,3 +26,5 @@ The notebook provides various routines to load the data into Neo4J. The notebook
 1. PageRank (+ eyeballs on Bloom) show pretty quickly that the "Code of Criminal Procedure" is replicated several times. The full list is now included in the notebook, in the Acts section. These should clearly be merged. Instead of doing so as a heavy list throughout the original CSVs, leverage the graph and combine the nodes once all is loaded.
 
 2. The next acts down in PageRank, so far, relate to bail and other procedural matters, or prohibition. There are some interesting quirks (e.g., bail is PageRank central, but has low "total count")
+
+3. Will need to deduplicate some of the loads.
