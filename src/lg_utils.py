@@ -51,21 +51,24 @@ def add_nodes_df_to_graph(graph, df, label, merge_key, graph_keys, df_keys, batc
         
     # eg index_name = idx_case_id, index_key = case_id    
     if index_to_add:
-      graph.run(f"CREATE CONSTRAINT IF NOT EXISTS {index_to_add['index_name']} ON (n:{label}) ASSERT n.{index_to_add['index_key']} IS UNIQUE")
+      graph.run(f"CREATE CONSTRAINT {index_to_add['index_name']} IF NOT EXISTS ON (n:{label}) ASSERT n.{index_to_add['index_key']} IS UNIQUE")
         
 
-def add_csv_to_graph(graph, csv_file, label, merge_key, graph_keys, df_keys, datetime_keys=[], max_iter=None):
-  number_nodes = count_nodes(graph, label)
+def add_csv_to_graph(graph, csv_file, label, merge_key, graph_keys, df_keys, datetime_keys=[], index_to_add=None, max_iter=None, use_merge=True, assume_all_merge=False):
+  number_nodes = 0 if assume_all_merge else count_nodes(graph, label)
   total_nodes = count_total_rows(csv_file)
   it = 0
   while number_nodes < total_nodes and (max_iter is None or it < max_iter):
     start_row = number_nodes + 1
     print("Loading cases from: ", start_row)
     df = load_csv(csv_file, start_row=start_row, number_rows=1e6, datetime_keys=datetime_keys)
-    add_nodes_df_to_graph(graph, df, label, merge_key, graph_keys, df_keys, batch_size=50000, add_index=number_nodes==0)
-    number_nodes = count_nodes(label)
+    add_nodes_df_to_graph(graph, df, label, merge_key, graph_keys, df_keys, batch_size=50000, index_to_add=index_to_add if number_nodes==0 else None, use_merge=use_merge)
+    if assume_all_merge:
+      number_nodes += len(df)
+    else:
+      number_nodes = count_nodes(label)
     it += 1
-    print("Completed loading nodes")
+    print("Completed loading DF segment, number now: ", number_nodes)
 
 # Note: use merge seems to return a lot of false positives on supposed duplicates, so defaulting to false for now
 # ensure to do a thorough search to make sure no false duplicates later

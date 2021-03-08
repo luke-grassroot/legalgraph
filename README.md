@@ -9,22 +9,31 @@ Given the size of the datasets, they are not included here, but are referenced f
 ### Nodes
 
 * **Judges** (index on judge ID), current count ~100k
-* **Cases** (index on case ID), current count ~100k (2018 loaded so far only)
+* **Cases** (index on case ID), current count ~14m (2018 loaded so far only)
 * **Acts** (index on act ID), current count ~30k
+* **States** (index on state ID), current count 32
+* **Districts** (index on district ID), current count 632
 
 ### Relationships
 
-* *JUDGED*: (Judge) -> (Case), current count ~3 million
-* *USES_ACT*: (Case) -> Act, current count ~18 million
+* *JUDGED*: (Judge) -> (Case), current count ~3 million (**NB**: Appears may not have loaded all the judge-case relationships)
+* *USES_ACT*: (Case) -> (Act), current count ~17 million
+* *IN_STATE*: (Case) -> (State), current count ~14 million
+* *CONTAINS*: (State) -> (District) current count ~600
+* *IN_DISTRICT*: (District) -> (Case) current count ~~14 million
 
-## Notebook
+## Notebooks and source
 
-The notebook provides various routines to load the data into Neo4J. The notebook uses the Neo4J driver for doing this, rather than Cypher scripts (e.g., using Neo4J's CSV import). That allows for easier local replication by using Pandas to easily chunk and reproduce the code. It also partially mitigates underlying lock-in to Cypher/Neo4J by encapsulating the key functions.
+The notebooks provides various routines to load the data into Neo4J. The notebook uses the Neo4J driver for doing this, rather than Cypher scripts (e.g., using Neo4J's CSV import). That allows for easier local replication by using Pandas to easily chunk and reproduce the code. It also partially mitigates underlying lock-in to Cypher/Neo4J by encapsulating the key functions. Basic structure is:
+
+* src/lg_utils: Various methods for doing batched loads of very large CSVs as nodes and relationships
+* src/IndiaLegal-LoadDataAndProps: notebook doing main lift of putting the CSVs into the graph (supercedes older IndiaLegal-LoadData)
+* src/IndiaLegalData-CleanData: notebook that consolidates quite a few acts that are the same but have variant spellings (still quite a few left)
+* src/IndiaLegal-DS: notebook that stores queries for running PageRank and Louvain community detection, and then exploring the results
 
 ## Next steps
 
-1. PageRank (+ eyeballs on Bloom) show pretty quickly that the "Code of Criminal Procedure" is replicated several times. The full list is now included in the notebook, in the Acts section. These should clearly be merged. Instead of doing so as a heavy list throughout the original CSVs, leverage the graph and combine the nodes once all is loaded.
-
-2. The next acts down in PageRank, so far, relate to bail and other procedural matters, or prohibition. There are some interesting quirks (e.g., bail is PageRank central, but has low "total count")
-
-3. Will need to deduplicate some of the loads.
+* See how PageRank scores and Louvain communities change if restrict cases to female defendants
+* Add in judge relationships on decisions, and again see how these change
+* Understand what act L scores are telling us about relationship between acts and states
+* Add sections to graph and rerun above, for final analyses
