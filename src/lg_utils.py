@@ -6,7 +6,7 @@ from py2neo.bulk import merge_nodes, create_nodes, create_relationships
 
 from math import ceil
 
-default_uri = "bolt://localhost:7687"
+default_uri = "bolt://localhost:11003"
 default_user = "neo4j"
 default_pword = "AIfD"
 
