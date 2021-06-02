@@ -6,9 +6,9 @@ from py2neo.bulk import merge_nodes, create_nodes, create_relationships
 
 from math import ceil
 
-default_uri = "bolt://localhost:7687"
+default_uri = "bolt://localhost:11003"
 default_user = "neo4j"
-default_pword = "localadmin"
+default_pword = "AIfD"
 
 def connect_to_graph(uri=default_uri, user=default_user, password=default_pword):
   return Graph(uri, user=user, password=password)
@@ -37,7 +37,6 @@ def add_nodes_df_to_graph(graph, df, label, merge_key, graph_keys, df_keys, batc
     gc.collect()
     if delete_first:
       graph.run(f"match (n: {label}) detach delete n")
-    
     for batch in range(0, ceil(len(df)/batch_size)):
       print("Loading nodes, batch: ", batch)
       start_row=batch * batch_size
@@ -56,7 +55,8 @@ def add_nodes_df_to_graph(graph, df, label, merge_key, graph_keys, df_keys, batc
 
 def add_csv_to_graph(graph, csv_file, label, merge_key, graph_keys, df_keys, datetime_keys=[], index_to_add=None, max_iter=None, use_merge=True, assume_all_merge=False):
   number_nodes = 0 if assume_all_merge else count_nodes(graph, label)
-  total_nodes = count_total_rows(csv_file)
+  total_nodes = count_total_rows(csv_file) - 1
+  print("Total nodes: ", total_nodes, ", Total graph size: ", count_nodes(graph, label))
   it = 0
   while number_nodes < total_nodes and (max_iter is None or it < max_iter):
     start_row = number_nodes + 1
@@ -66,14 +66,14 @@ def add_csv_to_graph(graph, csv_file, label, merge_key, graph_keys, df_keys, dat
     if assume_all_merge:
       number_nodes += len(df)
     else:
-      number_nodes = count_nodes(label)
+      number_nodes = count_nodes(graph, label)
     it += 1
     print("Completed loading DF segment, number now: ", number_nodes)
 
 # Note: use merge seems to return a lot of false positives on supposed duplicates, so defaulting to false for now
 # ensure to do a thorough search to make sure no false duplicates later
 def add_batch_relationships(graph, join_df, graph_keys, df_keys, relationship_type, prop_dict=None, df_start=0, minor_batch_size=int(1e3), major_batch_size=int(1e6), verbose=True):
-    number_in_graph = count_rels(relationship_type)
+    number_in_graph = count_rels(graph, relationship_type)
     start_index = int(df_start)
     end_index = max(len(join_df), int(start_index + major_batch_size))
     if verbose:
@@ -91,7 +91,7 @@ def add_batch_relationships(graph, join_df, graph_keys, df_keys, relationship_ty
                              start_node_key=graph_keys[0], 
                              end_node_key=graph_keys[1])
     
-    number_in_graph = count_rels(relationship_type)
+    number_in_graph = count_rels(graph, relationship_type)
     return number_in_graph, end_index
 
 
@@ -103,7 +103,7 @@ def add_relationships(graph, join_csv_file, relationship_type, target_id_series,
   df_it = 0
 
   while number_in_graph < total_relationships and df_read_start < total_relationships and (max_df_loads is None or df_it < max_df_loads):
-    raw_join_df = pd.read_csv('../data/acts_sections.csv', nrows=rows_per_df, skiprows=range(1, int(df_read_start)))
+    raw_join_df = pd.read_csv(join_csv_file, nrows=rows_per_df, skiprows=range(1, int(df_read_start)))
     adf = raw_join_df[raw_join_df[target_id_key].isin(target_id_series)]
     if verbose:
       print('Initiating outer loop, loading dataframe, from row: ', df_read_start, "length of this relationship frame: ", len(adf))
